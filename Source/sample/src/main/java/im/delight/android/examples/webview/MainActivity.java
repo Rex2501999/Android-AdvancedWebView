@@ -1,6 +1,5 @@
 package im.delight.android.examples.webview;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -50,7 +49,6 @@ public class MainActivity extends Activity implements AdvancedWebView.Listener {
 		mWebView.loadUrl(TEST_PAGE_URL);
 	}
 
-	@SuppressLint("NewApi")
 	@Override
 	protected void onResume() {
 		super.onResume();
@@ -58,7 +56,6 @@ public class MainActivity extends Activity implements AdvancedWebView.Listener {
 		// ...
 	}
 
-	@SuppressLint("NewApi")
 	@Override
 	protected void onPause() {
 		mWebView.onPause();

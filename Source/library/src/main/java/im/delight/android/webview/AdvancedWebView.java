@@ -6,7 +6,6 @@ package im.delight.android.webview;
  * Licensed under the MIT License (https://opensource.org/licenses/MIT)
  */
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.DownloadManager;
 import android.app.DownloadManager.Request;
@@ -62,7 +61,6 @@ import java.util.MissingResourceException;
 /**
  * Advanced WebView component for Android that works as intended out of the box
  */
-@SuppressWarnings("deprecation")
 public class AdvancedWebView extends WebView {
 
 	public static final String PACKAGE_NAME_DOWNLOAD_MANAGER = "com.android.providers.downloads";
@@ -109,7 +107,6 @@ public class AdvancedWebView extends WebView {
 		init(context);
 	}
 
-	@SuppressLint("NewApi")
 	protected static void setAllowAccessFromFileUrls(final WebSettings webSettings, final boolean allowed) {
 		if (Build.VERSION.SDK_INT >= 16) {
 			webSettings.setAllowFileAccessFromFileURLs(allowed);
@@ -190,7 +187,6 @@ public class AdvancedWebView extends WebView {
 	 * @return whether the download has been successfully handled or not
 	 * @throws IllegalStateException if the storage or the target directory could not be found or accessed
 	 */
-	@SuppressLint("NewApi")
 	public static boolean handleDownload(final Context context, final String fromUrl, final String toFilename) {
 		if (Build.VERSION.SDK_INT < 9) {
 			throw new RuntimeException("Method requires API level 9 or above");
@@ -225,7 +221,6 @@ public class AdvancedWebView extends WebView {
 		}
 	}
 
-	@SuppressLint("NewApi")
 	private static boolean openAppSettings(final Context context, final String packageName) {
 		if (Build.VERSION.SDK_INT < 9) {
 			throw new RuntimeException("Method requires API level 9 or above");
@@ -287,7 +282,6 @@ public class AdvancedWebView extends WebView {
 		mCustomWebChromeClient = client;
 	}
 
-	@SuppressLint("SetJavaScriptEnabled")
 	public void setGeolocationEnabled(final boolean enabled) {
 		if (enabled) {
 			getSettings().setJavaScriptEnabled(true);
@@ -298,7 +292,6 @@ public class AdvancedWebView extends WebView {
 		mGeolocationEnabled = enabled;
 	}
 
-	@SuppressLint("NewApi")
 	protected void setGeolocationDatabasePath() {
 		final Activity activity;
 
@@ -359,8 +352,6 @@ public class AdvancedWebView extends WebView {
 		loadDataWithBaseURL(baseUrl, html, "text/html", encoding, historyUrl);
 	}
 
-	@SuppressLint("NewApi")
-	@SuppressWarnings("all")
 	public void onResume() {
 		if (Build.VERSION.SDK_INT >= 11) {
 			super.onResume();
@@ -368,8 +359,6 @@ public class AdvancedWebView extends WebView {
 		resumeTimers();
 	}
 
-	@SuppressLint("NewApi")
-	@SuppressWarnings("all")
 	public void onPause() {
 		pauseTimers();
 		if (Build.VERSION.SDK_INT >= 11) {
@@ -497,12 +486,10 @@ public class AdvancedWebView extends WebView {
 		}
 	}
 
-	@SuppressWarnings("static-method")
 	public void setCookiesEnabled(final boolean enabled) {
 		CookieManager.getInstance().setAcceptCookie(enabled);
 	}
 
-	@SuppressLint("NewApi")
 	public void setThirdPartyCookiesEnabled(final boolean enabled) {
 		if (Build.VERSION.SDK_INT >= 21) {
 			CookieManager.getInstance().setAcceptThirdPartyCookies(this, enabled);
@@ -513,8 +500,6 @@ public class AdvancedWebView extends WebView {
 		setMixedContentAllowed(getSettings(), allowed);
 	}
 
-	@SuppressWarnings("static-method")
-	@SuppressLint("NewApi")
 	protected void setMixedContentAllowed(final WebSettings webSettings, final boolean allowed) {
 		if (Build.VERSION.SDK_INT >= 21) {
 			webSettings.setMixedContentMode(allowed ? WebSettings.MIXED_CONTENT_ALWAYS_ALLOW : WebSettings.MIXED_CONTENT_NEVER_ALLOW);
@@ -538,7 +523,6 @@ public class AdvancedWebView extends WebView {
 		webSettings.setBuiltInZoomControls(enabled);
 	}
 
-	@SuppressLint({"SetJavaScriptEnabled"})
 	protected void init(Context context) {
 		// in IDE's preview mode
 		if (isInEditMode()) {
@@ -695,8 +679,6 @@ public class AdvancedWebView extends WebView {
 				}
 			}
 
-			@SuppressLint("NewApi")
-			@SuppressWarnings("all")
 			public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
 				if (Build.VERSION.SDK_INT >= 11) {
 					if (mCustomWebViewClient != null) {
@@ -709,8 +691,6 @@ public class AdvancedWebView extends WebView {
 				}
 			}
 
-			@SuppressLint("NewApi")
-			@SuppressWarnings("all")
 			public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
 				if (Build.VERSION.SDK_INT >= 21) {
 					if (mCustomWebViewClient != null) {
@@ -750,8 +730,6 @@ public class AdvancedWebView extends WebView {
 				}
 			}
 
-			@SuppressLint("NewApi")
-			@SuppressWarnings("all")
 			public void onReceivedClientCertRequest(WebView view, ClientCertRequest request) {
 				if (Build.VERSION.SDK_INT >= 21) {
 					if (mCustomWebViewClient != null) {
@@ -789,8 +767,6 @@ public class AdvancedWebView extends WebView {
 				}
 			}
 
-			@SuppressLint("NewApi")
-			@SuppressWarnings("all")
 			public void onUnhandledInputEvent(WebView view, InputEvent event) {
 				if (Build.VERSION.SDK_INT >= 21) {
 					if (mCustomWebViewClient != null) {
@@ -810,8 +786,6 @@ public class AdvancedWebView extends WebView {
 				}
 			}
 
-			@SuppressLint("NewApi")
-			@SuppressWarnings("all")
 			public void onReceivedLoginRequest(WebView view, String realm, String account, String args) {
 				if (Build.VERSION.SDK_INT >= 12) {
 					if (mCustomWebViewClient != null) {
@@ -827,7 +801,6 @@ public class AdvancedWebView extends WebView {
 		super.setWebChromeClient(new WebChromeClient() {
 
 			// file upload callback (Android 2.2 (API level 8) -- Android 2.3 (API level 10)) (hidden method)
-			@SuppressWarnings("unused")
 			public void openFileChooser(ValueCallback<Uri> uploadMsg) {
 				openFileChooser(uploadMsg, null);
 			}
@@ -838,13 +811,11 @@ public class AdvancedWebView extends WebView {
 			}
 
 			// file upload callback (Android 4.1 (API level 16) -- Android 4.3 (API level 18)) (hidden method)
-			@SuppressWarnings("unused")
 			public void openFileChooser(ValueCallback<Uri> uploadMsg, String acceptType, String capture) {
 				openFileInput(uploadMsg, null, false);
 			}
 
 			// file upload callback (Android 5.0 (API level 21) -- current) (public method)
-			@SuppressWarnings("all")
 			public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) {
 				if (Build.VERSION.SDK_INT >= 21) {
 					final boolean allowMultiple = fileChooserParams.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE;
@@ -902,8 +873,6 @@ public class AdvancedWebView extends WebView {
 				}
 			}
 
-			@SuppressLint("NewApi")
-			@SuppressWarnings("all")
 			public void onShowCustomView(View view, int requestedOrientation, CustomViewCallback callback) {
 				if (Build.VERSION.SDK_INT >= 14) {
 					if (mCustomWebChromeClient != null) {
@@ -1008,8 +977,6 @@ public class AdvancedWebView extends WebView {
 				}
 			}
 
-			@SuppressLint("NewApi")
-			@SuppressWarnings("all")
 			public void onPermissionRequest(PermissionRequest request) {
 				if (Build.VERSION.SDK_INT >= 21) {
 					if (mCustomWebChromeClient != null) {
@@ -1020,8 +987,6 @@ public class AdvancedWebView extends WebView {
 				}
 			}
 
-			@SuppressLint("NewApi")
-			@SuppressWarnings("all")
 			public void onPermissionRequestCanceled(PermissionRequest request) {
 				if (Build.VERSION.SDK_INT >= 21) {
 					if (mCustomWebChromeClient != null) {
@@ -1270,7 +1235,6 @@ public class AdvancedWebView extends WebView {
 		return "Choose a file";
 	}
 
-	@SuppressLint("NewApi")
 	protected void openFileInput(final ValueCallback<Uri> fileUploadCallbackFirst, final ValueCallback<Uri[]> fileUploadCallbackSecond, final boolean allowMultiple) {
 		if (mFileUploadCallbackFirst != null) {
 			mFileUploadCallbackFirst.onReceiveValue(null);
