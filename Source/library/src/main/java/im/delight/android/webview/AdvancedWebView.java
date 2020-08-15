@@ -30,7 +30,6 @@ import android.view.ViewGroup;
 import android.webkit.ClientCertRequest;
 import android.webkit.ConsoleMessage;
 import android.webkit.CookieManager;
-import android.webkit.DownloadListener;
 import android.webkit.GeolocationPermissions.Callback;
 import android.webkit.HttpAuthHandler;
 import android.webkit.JsPromptResult;
@@ -72,8 +71,8 @@ public class AdvancedWebView extends WebView {
 	 * Alternative browsers that have their own rendering engine and *may* be installed on this device
 	 */
 	protected static final String[] ALTERNATIVE_BROWSERS = new String[]{"org.mozilla.firefox", "com.android.chrome", "com.opera.browser", "org.mozilla.firefox_beta", "com.chrome.beta", "com.opera.browser.beta"};
-	protected final List<String> mPermittedHostnames = new LinkedList<String>();
-	protected final Map<String, String> mHttpHeaders = new HashMap<String, String>();
+	protected final List<String> mPermittedHostnames = new LinkedList<>();
+	protected final Map<String, String> mHttpHeaders = new HashMap<>();
 	protected WeakReference<Activity> mActivity;
 	protected WeakReference<Fragment> mFragment;
 	protected Listener mListener;
@@ -92,6 +91,7 @@ public class AdvancedWebView extends WebView {
 	protected WebChromeClient mCustomWebChromeClient;
 	protected boolean mGeolocationEnabled;
 	protected String mUploadableFileTypes = "*/*";
+
 	public AdvancedWebView(Context context) {
 		super(context);
 		init(context);
@@ -107,10 +107,10 @@ public class AdvancedWebView extends WebView {
 		init(context);
 	}
 
-	protected static void setAllowAccessFromFileUrls(final WebSettings webSettings, final boolean allowed) {
+	protected static void setAllowAccessFromFileUrls(final WebSettings webSettings) {
 		if (Build.VERSION.SDK_INT >= 16) {
-			webSettings.setAllowFileAccessFromFileURLs(allowed);
-			webSettings.setAllowUniversalAccessFromFileURLs(allowed);
+			webSettings.setAllowFileAccessFromFileURLs(false);
+			webSettings.setAllowUniversalAccessFromFileURLs(false);
 		}
 	}
 
@@ -188,15 +188,10 @@ public class AdvancedWebView extends WebView {
 	 * @throws IllegalStateException if the storage or the target directory could not be found or accessed
 	 */
 	public static boolean handleDownload(final Context context, final String fromUrl, final String toFilename) {
-		if (Build.VERSION.SDK_INT < 9) {
-			throw new RuntimeException("Method requires API level 9 or above");
-		}
 
 		final Request request = new Request(Uri.parse(fromUrl));
-		if (Build.VERSION.SDK_INT >= 11) {
-			request.allowScanningByMediaScanner();
-			request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-		}
+		request.allowScanningByMediaScanner();
+		request.setNotificationVisibility(Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
 		request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, toFilename);
 
 		final DownloadManager dm = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
@@ -204,9 +199,7 @@ public class AdvancedWebView extends WebView {
 			try {
 				dm.enqueue(request);
 			} catch (SecurityException e) {
-				if (Build.VERSION.SDK_INT >= 11) {
-					request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE);
-				}
+				request.setNotificationVisibility(Request.VISIBILITY_VISIBLE);
 				dm.enqueue(request);
 			}
 
@@ -215,27 +208,21 @@ public class AdvancedWebView extends WebView {
 		// if the download manager app has been disabled on the device
 		catch (IllegalArgumentException e) {
 			// show the settings screen where the user can enable the download manager app again
-			openAppSettings(context, AdvancedWebView.PACKAGE_NAME_DOWNLOAD_MANAGER);
+			openAppSettings(context);
 
 			return false;
 		}
 	}
 
-	private static boolean openAppSettings(final Context context, final String packageName) {
-		if (Build.VERSION.SDK_INT < 9) {
-			throw new RuntimeException("Method requires API level 9 or above");
-		}
-
+	private static void openAppSettings(final Context context) {
 		try {
 			final Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-			intent.setData(Uri.parse("package:" + packageName));
+			intent.setData(Uri.parse("package:" + AdvancedWebView.PACKAGE_NAME_DOWNLOAD_MANAGER));
 			intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
 			context.startActivity(intent);
 
-			return true;
-		} catch (Exception e) {
-			return false;
+		} catch (Exception ignored) {
 		}
 	}
 
@@ -245,7 +232,7 @@ public class AdvancedWebView extends WebView {
 
 	public void setListener(final Activity activity, final Listener listener, final int requestCodeFilePicker) {
 		if (activity != null) {
-			mActivity = new WeakReference<Activity>(activity);
+			mActivity = new WeakReference<>(activity);
 		} else {
 			mActivity = null;
 		}
@@ -259,7 +246,7 @@ public class AdvancedWebView extends WebView {
 
 	public void setListener(final Fragment fragment, final Listener listener, final int requestCodeFilePicker) {
 		if (fragment != null) {
-			mFragment = new WeakReference<Fragment>(fragment);
+			mFragment = new WeakReference<>(fragment);
 		} else {
 			mFragment = null;
 		}
@@ -295,7 +282,7 @@ public class AdvancedWebView extends WebView {
 	protected void setGeolocationDatabasePath() {
 		final Activity activity;
 
-		if (mFragment != null && mFragment.get() != null && Build.VERSION.SDK_INT >= 11 && mFragment.get().getActivity() != null) {
+		if (mFragment != null && mFragment.get() != null && mFragment.get().getActivity() != null) {
 			activity = mFragment.get().getActivity();
 		} else if (mActivity != null && mActivity.get() != null) {
 			activity = mActivity.get();
@@ -353,17 +340,13 @@ public class AdvancedWebView extends WebView {
 	}
 
 	public void onResume() {
-		if (Build.VERSION.SDK_INT >= 11) {
-			super.onResume();
-		}
+		super.onResume();
 		resumeTimers();
 	}
 
 	public void onPause() {
 		pauseTimers();
-		if (Build.VERSION.SDK_INT >= 11) {
-			super.onPause();
-		}
+		super.onPause();
 	}
 
 	public void onDestroy() {
@@ -531,7 +514,7 @@ public class AdvancedWebView extends WebView {
 		}
 
 		if (context instanceof Activity) {
-			mActivity = new WeakReference<Activity>((Activity) context);
+			mActivity = new WeakReference<>((Activity) context);
 		}
 
 		mLanguageIso3 = getLanguageIso3();
@@ -546,7 +529,7 @@ public class AdvancedWebView extends WebView {
 
 		final WebSettings webSettings = getSettings();
 		webSettings.setAllowFileAccess(false);
-		setAllowAccessFromFileUrls(webSettings, false);
+		setAllowAccessFromFileUrls(webSettings);
 		webSettings.setBuiltInZoomControls(false);
 		webSettings.setJavaScriptEnabled(true);
 		webSettings.setDomStorageEnabled(true);
@@ -633,17 +616,21 @@ public class AdvancedWebView extends WebView {
 				if (scheme != null) {
 					final Intent externalSchemeIntent;
 
-					if (scheme.equals("tel")) {
-						externalSchemeIntent = new Intent(Intent.ACTION_DIAL, uri);
-					} else if (scheme.equals("sms")) {
-						externalSchemeIntent = new Intent(Intent.ACTION_SENDTO, uri);
-					} else if (scheme.equals("mailto")) {
-						externalSchemeIntent = new Intent(Intent.ACTION_SENDTO, uri);
-					} else if (scheme.equals("whatsapp")) {
-						externalSchemeIntent = new Intent(Intent.ACTION_SENDTO, uri);
-						externalSchemeIntent.setPackage("com.whatsapp");
-					} else {
-						externalSchemeIntent = null;
+					switch (scheme) {
+						case "tel":
+							externalSchemeIntent = new Intent(Intent.ACTION_DIAL, uri);
+							break;
+						case "sms":
+						case "mailto":
+							externalSchemeIntent = new Intent(Intent.ACTION_SENDTO, uri);
+							break;
+						case "whatsapp":
+							externalSchemeIntent = new Intent(Intent.ACTION_SENDTO, uri);
+							externalSchemeIntent.setPackage("com.whatsapp");
+							break;
+						default:
+							externalSchemeIntent = null;
+							break;
 					}
 
 					if (externalSchemeIntent != null) {
@@ -680,14 +667,10 @@ public class AdvancedWebView extends WebView {
 			}
 
 			public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
-				if (Build.VERSION.SDK_INT >= 11) {
-					if (mCustomWebViewClient != null) {
-						return mCustomWebViewClient.shouldInterceptRequest(view, url);
-					} else {
-						return super.shouldInterceptRequest(view, url);
-					}
+				if (mCustomWebViewClient != null) {
+					return mCustomWebViewClient.shouldInterceptRequest(view, url);
 				} else {
-					return null;
+					return super.shouldInterceptRequest(view, url);
 				}
 			}
 
@@ -787,12 +770,10 @@ public class AdvancedWebView extends WebView {
 			}
 
 			public void onReceivedLoginRequest(WebView view, String realm, String account, String args) {
-				if (Build.VERSION.SDK_INT >= 12) {
-					if (mCustomWebViewClient != null) {
-						mCustomWebViewClient.onReceivedLoginRequest(view, realm, account, args);
-					} else {
-						super.onReceivedLoginRequest(view, realm, account, args);
-					}
+				if (mCustomWebViewClient != null) {
+					mCustomWebViewClient.onReceivedLoginRequest(view, realm, account, args);
+				} else {
+					super.onReceivedLoginRequest(view, realm, account, args);
 				}
 			}
 
@@ -800,27 +781,12 @@ public class AdvancedWebView extends WebView {
 
 		super.setWebChromeClient(new WebChromeClient() {
 
-			// file upload callback (Android 2.2 (API level 8) -- Android 2.3 (API level 10)) (hidden method)
-			public void openFileChooser(ValueCallback<Uri> uploadMsg) {
-				openFileChooser(uploadMsg, null);
-			}
-
-			// file upload callback (Android 3.0 (API level 11) -- Android 4.0 (API level 15)) (hidden method)
-			public void openFileChooser(ValueCallback<Uri> uploadMsg, String acceptType) {
-				openFileChooser(uploadMsg, acceptType, null);
-			}
-
-			// file upload callback (Android 4.1 (API level 16) -- Android 4.3 (API level 18)) (hidden method)
-			public void openFileChooser(ValueCallback<Uri> uploadMsg, String acceptType, String capture) {
-				openFileInput(uploadMsg, null, false);
-			}
-
 			// file upload callback (Android 5.0 (API level 21) -- current) (public method)
 			public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams) {
 				if (Build.VERSION.SDK_INT >= 21) {
 					final boolean allowMultiple = fileChooserParams.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE;
 
-					openFileInput(null, filePathCallback, allowMultiple);
+					openFileInput(filePathCallback, allowMultiple);
 
 					return true;
 				} else {
@@ -1071,17 +1037,12 @@ public class AdvancedWebView extends WebView {
 
 		});
 
-		setDownloadListener(new DownloadListener() {
+		setDownloadListener((url, userAgent, contentDisposition, mimeType, contentLength) -> {
+			final String suggestedFilename = URLUtil.guessFileName(url, contentDisposition, mimeType);
 
-			@Override
-			public void onDownloadStart(final String url, final String userAgent, final String contentDisposition, final String mimeType, final long contentLength) {
-				final String suggestedFilename = URLUtil.guessFileName(url, contentDisposition, mimeType);
-
-				if (mListener != null) {
-					mListener.onDownloadRequested(url, suggestedFilename, mimeType, contentLength, contentDisposition, userAgent);
-				}
+			if (mListener != null) {
+				mListener.onDownloadRequested(url, suggestedFilename, mimeType, contentLength, contentDisposition, userAgent);
 			}
-
 		});
 	}
 
@@ -1188,46 +1149,56 @@ public class AdvancedWebView extends WebView {
 	 */
 	protected String getFileUploadPromptLabel() {
 		try {
-			if (mLanguageIso3.equals("zho")) return decodeBase64("6YCJ5oup5LiA5Liq5paH5Lu2");
-			else if (mLanguageIso3.equals("spa")) return decodeBase64("RWxpamEgdW4gYXJjaGl2bw==");
-			else if (mLanguageIso3.equals("hin"))
-				return decodeBase64("4KSP4KSVIOCkq+CkvOCkvuCkh+CksiDgpJrgpYHgpKjgpYfgpII=");
-			else if (mLanguageIso3.equals("ben"))
-				return decodeBase64("4KaP4KaV4Kaf4Ka/IOCmq+CmvuCmh+CmsiDgpqjgpr/gprDgp43gpqzgpr7gpprgpqg=");
-			else if (mLanguageIso3.equals("ara"))
-				return decodeBase64("2KfYrtiq2YrYp9ixINmF2YTZgSDZiNin2K3Yrw==");
-			else if (mLanguageIso3.equals("por")) return decodeBase64("RXNjb2xoYSB1bSBhcnF1aXZv");
-			else if (mLanguageIso3.equals("rus"))
-				return decodeBase64("0JLRi9Cx0LXRgNC40YLQtSDQvtC00LjQvSDRhNCw0LnQuw==");
-			else if (mLanguageIso3.equals("jpn"))
-				return decodeBase64("MeODleOCoeOCpOODq+OCkumBuOaKnuOBl+OBpuOBj+OBoOOBleOBhA==");
-			else if (mLanguageIso3.equals("pan"))
-				return decodeBase64("4KiH4Kmx4KiVIOCoq+CovuCoh+CosiDgqJrgqYHgqKPgqYs=");
-			else if (mLanguageIso3.equals("deu")) return decodeBase64("V8OkaGxlIGVpbmUgRGF0ZWk=");
-			else if (mLanguageIso3.equals("jav")) return decodeBase64("UGlsaWggc2lqaSBiZXJrYXM=");
-			else if (mLanguageIso3.equals("msa")) return decodeBase64("UGlsaWggc2F0dSBmYWls");
-			else if (mLanguageIso3.equals("tel"))
-				return decodeBase64("4LCS4LCVIOCwq+CxhuCxluCwsuCxjeCwqOCxgSDgsI7gsILgsJrgsYHgsJXgsYvgsILgsKHgsL8=");
-			else if (mLanguageIso3.equals("vie"))
-				return decodeBase64("Q2jhu41uIG3hu5l0IHThuq1wIHRpbg==");
-			else if (mLanguageIso3.equals("kor"))
-				return decodeBase64("7ZWY64KY7J2YIO2MjOydvOydhCDshKDtg50=");
-			else if (mLanguageIso3.equals("fra"))
-				return decodeBase64("Q2hvaXNpc3NleiB1biBmaWNoaWVy");
-			else if (mLanguageIso3.equals("mar"))
-				return decodeBase64("4KSr4KS+4KSH4KSyIOCkqOCkv+CkteCkoeCkvg==");
-			else if (mLanguageIso3.equals("tam"))
-				return decodeBase64("4K6S4K6w4K+BIOCuleCvh+CuvuCuquCvjeCuquCviCDgrqTgr4fgrrDgr43grrXgr4E=");
-			else if (mLanguageIso3.equals("urd"))
-				return decodeBase64("2KfbjNqpINmB2KfYptmEINmF24zauiDYs9uSINin2YbYqtiu2KfYqCDaqdix24zaug==");
-			else if (mLanguageIso3.equals("fas"))
-				return decodeBase64("2LHYpyDYp9mG2KrYrtin2Kgg2qnZhtuM2K8g24zaqSDZgdin24zZhA==");
-			else if (mLanguageIso3.equals("tur")) return decodeBase64("QmlyIGRvc3lhIHNlw6dpbg==");
-			else if (mLanguageIso3.equals("ita")) return decodeBase64("U2NlZ2xpIHVuIGZpbGU=");
-			else if (mLanguageIso3.equals("tha"))
-				return decodeBase64("4LmA4Lil4Li34Lit4LiB4LmE4Lif4Lil4LmM4Lir4LiZ4Li24LmI4LiH");
-			else if (mLanguageIso3.equals("guj"))
-				return decodeBase64("4KqP4KqVIOCqq+CqvuCqh+CqsuCqqOCrhyDgqqrgqrjgqoLgqqY=");
+			switch (mLanguageIso3) {
+				case "zho":
+					return decodeBase64("6YCJ5oup5LiA5Liq5paH5Lu2");
+				case "spa":
+					return decodeBase64("RWxpamEgdW4gYXJjaGl2bw==");
+				case "hin":
+					return decodeBase64("4KSP4KSVIOCkq+CkvOCkvuCkh+CksiDgpJrgpYHgpKjgpYfgpII=");
+				case "ben":
+					return decodeBase64("4KaP4KaV4Kaf4Ka/IOCmq+CmvuCmh+CmsiDgpqjgpr/gprDgp43gpqzgpr7gpprgpqg=");
+				case "ara":
+					return decodeBase64("2KfYrtiq2YrYp9ixINmF2YTZgSDZiNin2K3Yrw==");
+				case "por":
+					return decodeBase64("RXNjb2xoYSB1bSBhcnF1aXZv");
+				case "rus":
+					return decodeBase64("0JLRi9Cx0LXRgNC40YLQtSDQvtC00LjQvSDRhNCw0LnQuw==");
+				case "jpn":
+					return decodeBase64("MeODleOCoeOCpOODq+OCkumBuOaKnuOBl+OBpuOBj+OBoOOBleOBhA==");
+				case "pan":
+					return decodeBase64("4KiH4Kmx4KiVIOCoq+CovuCoh+CosiDgqJrgqYHgqKPgqYs=");
+				case "deu":
+					return decodeBase64("V8OkaGxlIGVpbmUgRGF0ZWk=");
+				case "jav":
+					return decodeBase64("UGlsaWggc2lqaSBiZXJrYXM=");
+				case "msa":
+					return decodeBase64("UGlsaWggc2F0dSBmYWls");
+				case "tel":
+					return decodeBase64("4LCS4LCVIOCwq+CxhuCxluCwsuCxjeCwqOCxgSDgsI7gsILgsJrgsYHgsJXgsYvgsILgsKHgsL8=");
+				case "vie":
+					return decodeBase64("Q2jhu41uIG3hu5l0IHThuq1wIHRpbg==");
+				case "kor":
+					return decodeBase64("7ZWY64KY7J2YIO2MjOydvOydhCDshKDtg50=");
+				case "fra":
+					return decodeBase64("Q2hvaXNpc3NleiB1biBmaWNoaWVy");
+				case "mar":
+					return decodeBase64("4KSr4KS+4KSH4KSyIOCkqOCkv+CkteCkoeCkvg==");
+				case "tam":
+					return decodeBase64("4K6S4K6w4K+BIOCuleCvh+CuvuCuquCvjeCuquCviCDgrqTgr4fgrrDgr43grrXgr4E=");
+				case "urd":
+					return decodeBase64("2KfbjNqpINmB2KfYptmEINmF24zauiDYs9uSINin2YbYqtiu2KfYqCDaqdix24zaug==");
+				case "fas":
+					return decodeBase64("2LHYpyDYp9mG2KrYrtin2Kgg2qnZhtuM2K8g24zaqSDZgdin24zZhA==");
+				case "tur":
+					return decodeBase64("QmlyIGRvc3lhIHNlw6dpbg==");
+				case "ita":
+					return decodeBase64("U2NlZ2xpIHVuIGZpbGU=");
+				case "tha":
+					return decodeBase64("4LmA4Lil4Li34Lit4LiB4LmE4Lif4Lil4LmM4Lir4LiZ4Li24LmI4LiH");
+				case "guj":
+					return decodeBase64("4KqP4KqVIOCqq+CqvuCqh+CqsuCqqOCrhyDgqqrgqrjgqoLgqqY=");
+			}
 		} catch (Exception ignored) {
 		}
 
@@ -1235,11 +1206,11 @@ public class AdvancedWebView extends WebView {
 		return "Choose a file";
 	}
 
-	protected void openFileInput(final ValueCallback<Uri> fileUploadCallbackFirst, final ValueCallback<Uri[]> fileUploadCallbackSecond, final boolean allowMultiple) {
+	protected void openFileInput(final ValueCallback<Uri[]> fileUploadCallbackSecond, final boolean allowMultiple) {
 		if (mFileUploadCallbackFirst != null) {
 			mFileUploadCallbackFirst.onReceiveValue(null);
 		}
-		mFileUploadCallbackFirst = fileUploadCallbackFirst;
+		mFileUploadCallbackFirst = null;
 
 		if (mFileUploadCallbackSecond != null) {
 			mFileUploadCallbackSecond.onReceiveValue(null);
@@ -1257,7 +1228,7 @@ public class AdvancedWebView extends WebView {
 
 		i.setType(mUploadableFileTypes);
 
-		if (mFragment != null && mFragment.get() != null && Build.VERSION.SDK_INT >= 11) {
+		if (mFragment != null && mFragment.get() != null) {
 			mFragment.get().startActivityForResult(Intent.createChooser(i, getFileUploadPromptLabel()), mRequestCodeFilePicker);
 		} else if (mActivity != null && mActivity.get() != null) {
 			mActivity.get().startActivityForResult(Intent.createChooser(i, getFileUploadPromptLabel()), mRequestCodeFilePicker);
