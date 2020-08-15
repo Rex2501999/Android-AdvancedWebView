@@ -23,7 +23,6 @@ import android.os.Environment;
 import android.os.Message;
 import android.util.AttributeSet;
 import android.util.Base64;
-import android.view.InputEvent;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -45,6 +44,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebStorage.QuotaUpdater;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Toast;
 
 import java.io.UnsupportedEncodingException;
 import java.lang.ref.WeakReference;
@@ -204,6 +204,13 @@ public class AdvancedWebView extends WebView {
 			}
 
 			return true;
+		} catch (SecurityException e) {
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+				Toast.makeText(context, "Please enable STORAGE permission!",
+						Toast.LENGTH_LONG).show();
+				openAppSettings(context);
+			}
+			return false;
 		}
 		// if the download manager app has been disabled on the device
 		catch (IllegalArgumentException e) {
@@ -235,20 +242,6 @@ public class AdvancedWebView extends WebView {
 			mActivity = new WeakReference<>(activity);
 		} else {
 			mActivity = null;
-		}
-
-		setListener(listener, requestCodeFilePicker);
-	}
-
-	public void setListener(final Fragment fragment, final Listener listener) {
-		setListener(fragment, listener, REQUEST_CODE_FILE_PICKER);
-	}
-
-	public void setListener(final Fragment fragment, final Listener listener, final int requestCodeFilePicker) {
-		if (fragment != null) {
-			mFragment = new WeakReference<>(fragment);
-		} else {
-			mFragment = null;
 		}
 
 		setListener(listener, requestCodeFilePicker);
@@ -290,7 +283,9 @@ public class AdvancedWebView extends WebView {
 			return;
 		}
 
-		getSettings().setGeolocationDatabasePath(activity.getFilesDir().getPath());
+		if (activity != null) {
+			getSettings().setGeolocationDatabasePath(activity.getFilesDir().getPath());
+		}
 	}
 
 	public void setUploadableFileTypes(final String mimeType) {
@@ -524,8 +519,6 @@ public class AdvancedWebView extends WebView {
 
 		setSaveEnabled(true);
 
-		final String filesDir = context.getFilesDir().getPath();
-		final String databaseDir = filesDir.substring(0, filesDir.lastIndexOf("/")) + DATABASES_SUB_FOLDER;
 
 		final WebSettings webSettings = getSettings();
 		webSettings.setAllowFileAccess(false);
@@ -533,12 +526,21 @@ public class AdvancedWebView extends WebView {
 		webSettings.setBuiltInZoomControls(false);
 		webSettings.setJavaScriptEnabled(true);
 		webSettings.setDomStorageEnabled(true);
+
 		if (Build.VERSION.SDK_INT < 18) {
 			webSettings.setRenderPriority(WebSettings.RenderPriority.HIGH);
 		}
 		webSettings.setDatabaseEnabled(true);
+
 		if (Build.VERSION.SDK_INT < 19) {
+			final String filesDir = context.getFilesDir().getPath();
+			final String databaseDir = filesDir.substring(0, filesDir.lastIndexOf("/")) + DATABASES_SUB_FOLDER;
 			webSettings.setDatabasePath(databaseDir);
+		}
+
+		if (Build.VERSION.SDK_INT >= 26) {
+			// this should make render a bit faster
+			this.setRendererPriorityPolicy(RENDERER_PRIORITY_IMPORTANT, false);
 		}
 
 		if (Build.VERSION.SDK_INT >= 21) {
@@ -747,16 +749,6 @@ public class AdvancedWebView extends WebView {
 					mCustomWebViewClient.onUnhandledKeyEvent(view, event);
 				} else {
 					super.onUnhandledKeyEvent(view, event);
-				}
-			}
-
-			public void onUnhandledInputEvent(WebView view, InputEvent event) {
-				if (Build.VERSION.SDK_INT >= 21) {
-					if (mCustomWebViewClient != null) {
-						mCustomWebViewClient.onUnhandledInputEvent(view, event);
-					} else {
-						super.onUnhandledInputEvent(view, event);
-					}
 				}
 			}
 

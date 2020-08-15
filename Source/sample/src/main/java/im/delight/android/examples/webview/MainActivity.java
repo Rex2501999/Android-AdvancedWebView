@@ -22,7 +22,7 @@ public class MainActivity extends Activity implements AdvancedWebView.Listener {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-		mWebView = (AdvancedWebView) findViewById(R.id.webview);
+		mWebView = findViewById(R.id.webview);
 		mWebView.setListener(this, this);
 		mWebView.setGeolocationEnabled(false);
 		mWebView.setMixedContentAllowed(false);
