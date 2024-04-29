@@ -1,3 +1,21 @@
+使用：actions/cache@v4.0.2
+  和：
+    # 要快取和復原的檔案、目錄和通配符模式的列表
+    小路：
+    # 用於復原和保存快取的明確金鑰
+    鑰匙：
+    # 如果金鑰沒有發生快取命中，則用於恢復陳舊快取的有序密鑰清單。請注意，在這種情況下，“cache-hit”返回 false。
+    恢復密鑰：# 可選
+    # 上傳時用於分割大檔案的區塊大小，以位元組為單位
+    upload-chunk-size: # 可選
+    # 啟用時的選用布林值，讓 Windows 執行程式保存或還原可以分別在其他平台上還原或儲存的快取
+    enableCrossOsArchive: # 可選，預設為 false
+    # 如果未找到快取項目，則工作流程失敗
+    fail-on-cache-miss: # 可選，預設為 false
+    # 檢查給定輸入（key、restore-keys）是否存在快取項目，而不下載快取
+    Lookup-only: # 可選，預設為 false
+    # 運行後步驟以保存緩存，即使先前的另一個步驟失敗
+    save-always: # 可選，預設為 false
 name: Android CI
 
 on:
